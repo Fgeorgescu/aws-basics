@@ -4,6 +4,39 @@ Quick-reference definitions for all terms covered in this guide. Sorted alphabet
 
 ---
 
+## Active-Active
+Multi-region deployment where all regions serve live traffic simultaneously. No failover required; a region failure reduces capacity but the system stays available. Requires globally replicated, conflict-tolerant data tiers (DynamoDB Global Tables, Aurora Global DB with write forwarding).
+
+| | |
+|---|---|
+| **Docs** | [Active-active multi-site](https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html) |
+| **Azure** | Active-active with Azure Traffic Manager / Front Door |
+| **GCP** | Multi-region active-active with Cloud Spanner or Cloud Load Balancing |
+
+---
+
+## Active-Passive
+Deployment where a primary region handles all traffic and a standby region is ready to take over. Failover is triggered by a health check (Route 53) or manually. Standby may be idle (hot standby) or scaled-down (warm standby).
+
+| | |
+|---|---|
+| **Docs** | [DR options — active-passive](https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html) |
+| **Azure** | Azure Site Recovery / Traffic Manager with priority routing |
+| **GCP** | Cloud Load Balancing with failover backends |
+
+---
+
+## Aurora Global Database
+Aurora feature that replicates a primary Aurora cluster to up to five secondary read-only regions with typical lag < 1 second. Supports managed failover (promotes a secondary to primary) with RTO typically under 1 minute.
+
+| | |
+|---|---|
+| **Docs** | [Aurora Global Database](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-global-database.html) |
+| **Azure** | Azure SQL Database geo-replication / Hyperscale |
+| **GCP** | Cloud Spanner (multi-region) / AlloyDB cross-region replication |
+
+---
+
 ## ABAC — Attribute-Based Access Control
 Access control model where permissions are granted based on tags/attributes on the principal (user, role) and the resource, instead of explicit per-resource assignments.
 
@@ -136,6 +169,17 @@ AWS service that analyzes CloudWatch metrics and recommends right-sized EC2, Lam
 
 ---
 
+## Circuit Breaker
+Software pattern that wraps calls to a dependency and stops sending requests when failures exceed a threshold, allowing the dependency time to recover. AWS App Mesh and API Gateway support circuit breaking natively.
+
+| | |
+|---|---|
+| **Docs** | [App Mesh circuit breaking](https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual-node-spec.html) |
+| **Azure** | Azure API Management (circuit breaker policy) |
+| **GCP** | Cloud Service Mesh / Traffic Director |
+
+---
+
 ## Confused Deputy
 Security vulnerability where a trusted service (the "deputy") is tricked into performing actions on behalf of a less-trusted principal. Mitigated with `sts:ExternalId` in cross-account trust policies.
 
@@ -177,6 +221,17 @@ An account designated to manage an AWS service on behalf of the entire organizat
 | **Docs** | [Delegated admin](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_integrate_services_list.html) |
 | **Azure** | Azure Lighthouse (cross-tenant delegation) |
 | **GCP** | GCP folder-level IAM delegation |
+
+---
+
+## DynamoDB Global Tables
+DynamoDB feature that replicates a table to multiple AWS regions in an active-active configuration. Writes are accepted in any region; conflicts resolved by last-writer-wins per item. Each replica region adds one rWRU per write.
+
+| | |
+|---|---|
+| **Docs** | [Global Tables](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GlobalTables.html) |
+| **Azure** | Azure Cosmos DB (multi-region writes) |
+| **GCP** | Cloud Spanner (multi-region) / Firestore multi-region |
 
 ---
 
@@ -287,6 +342,11 @@ VPC Endpoint type for S3 and DynamoDB. Free; implemented via route table injecti
 | **Docs** | [Gateway endpoints](https://docs.aws.amazon.com/vpc/latest/privatelink/gateway-endpoints.html) |
 | **Azure** | Service Endpoint (similar mechanism) |
 | **GCP** | Private Google Access (similar concept) |
+
+---
+
+## Global Tables
+See **DynamoDB Global Tables**.
 
 ---
 
@@ -859,3 +919,124 @@ Mechanism allowing workloads (GitHub Actions, GCP service accounts, on-prem syst
 | **Docs** | [Workload identity federation](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_oidc.html) |
 | **Azure** | Federated Identity Credentials (Azure AD workload identity) |
 | **GCP** | Workload Identity Federation |
+
+---
+
+## AWS Fault Injection Service (FIS)
+Managed chaos engineering service for running controlled fault experiments: terminate instances, inject network latency, force AZ failures, interrupt Spot instances. Used to validate actual RTO under real failure conditions.
+
+| | |
+|---|---|
+| **Docs** | [AWS FIS](https://docs.aws.amazon.com/fis/latest/userguide/what-is.html) |
+| **Azure** | Azure Chaos Studio |
+| **GCP** | No managed equivalent (use open-source Chaos Toolkit or Chaos Monkey) |
+
+---
+
+## AWS Resilience Hub
+Service that analyzes an application's architecture against declared RTO/RPO targets, produces a Resiliency Score, and generates prioritized remediation recommendations. Re-evaluates on infrastructure changes.
+
+| | |
+|---|---|
+| **Docs** | [Resilience Hub](https://docs.aws.amazon.com/resilience-hub/latest/userguide/what-is.html) |
+| **Azure** | Azure Business Continuity Center |
+| **GCP** | No direct equivalent |
+
+---
+
+## Cross-Zone Load Balancing
+Load balancer setting that distributes requests evenly across targets in all AZs, regardless of which AZ the LB node receives traffic in. Default on for ALB (generates inter-AZ charges). Default off for NLB; when enabled on new NLBs (post-Oct 2023), no inter-AZ charge.
+
+| | |
+|---|---|
+| **Docs** | [Cross-zone load balancing](https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html#cross-zone-load-balancing) |
+| **Azure** | Zone-redundant load balancing (Azure Load Balancer Standard) |
+| **GCP** | Cloud Load Balancing (globally distributed by default) |
+
+---
+
+## ElastiCache
+AWS managed in-memory cache and message broker service supporting Redis and Memcached. Multi-AZ auto-failover promotes a read replica to primary on failure (~20–30s). Global Datastore replicates Redis data cross-region.
+
+| | |
+|---|---|
+| **Docs** | [ElastiCache](https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/WhatIs.html) |
+| **Azure** | Azure Cache for Redis |
+| **GCP** | Memorystore (Redis / Memcached) |
+
+---
+
+## Pilot Light
+DR strategy where only core data replication runs in the DR region (DB snapshots, S3 CRR, AMI copies) but no compute. On failover, compute is launched from pre-replicated assets. RTO: 30–60 min. Lowest DR cost.
+
+| | |
+|---|---|
+| **Docs** | [Pilot light DR](https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html) |
+| **Azure** | Azure Site Recovery (minimal replication mode) |
+| **GCP** | No specific term — achieved with Cloud Storage snapshots + Deployment Manager |
+
+---
+
+## RPO — Recovery Point Objective
+Maximum acceptable data loss measured in time. RPO = 0 requires synchronous replication (only viable intra-region). RPO of seconds to minutes is achievable cross-region with async replication (Aurora Global DB, DynamoDB Global Tables).
+
+| | |
+|---|---|
+| **Docs** | [DR concepts](https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-workloads-on-aws.html) |
+| **Azure** | Same concept — used in Azure Site Recovery SLA definitions |
+| **GCP** | Same concept |
+
+---
+
+## RTO — Recovery Time Objective
+Maximum acceptable downtime from failure to full service restoration. Drives failover strategy: Pilot Light (hours) → Warm Standby (30 min) → Active-Passive (minutes) → Active-Active (seconds/zero).
+
+| | |
+|---|---|
+| **Docs** | [DR concepts](https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-workloads-on-aws.html) |
+| **Azure** | Same concept |
+| **GCP** | Same concept |
+
+---
+
+## Route 53 ARC — Application Recovery Controller
+Route 53 feature that adds readiness checks (verify DR capacity matches production config) and routing controls (manually shift traffic between regions via API, bypassing DNS TTL) to failover orchestration.
+
+| | |
+|---|---|
+| **Docs** | [Route 53 ARC](https://docs.aws.amazon.com/r53recovery/latest/dg/what-is-route53-recovery.html) |
+| **Azure** | Azure Traffic Manager + Azure Site Recovery (combined) |
+| **GCP** | No direct equivalent |
+
+---
+
+## S3 Cross-Region Replication (CRR)
+S3 feature that automatically replicates objects from a source bucket to one or more destination buckets in different regions. Replication is asynchronous. Charged at standard PUT request rates + inter-region data transfer.
+
+| | |
+|---|---|
+| **Docs** | [S3 CRR](https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html) |
+| **Azure** | Azure Blob geo-redundant storage (GRS/GZRS) |
+| **GCP** | Cloud Storage dual-region or multi-region buckets |
+
+---
+
+## S3 Multi-Region Access Points (MRAP)
+Single global S3 endpoint that routes requests to the nearest available bucket. Works with CRR to maintain synchronized copies. Supports failover controls for Active-Active or Active-Passive bucket access patterns.
+
+| | |
+|---|---|
+| **Docs** | [S3 MRAP](https://docs.aws.amazon.com/AmazonS3/latest/userguide/MultiRegionAccessPoints.html) |
+| **Azure** | Azure Blob Storage with geo-redundancy |
+| **GCP** | Cloud Storage multi-region bucket |
+
+---
+
+## Warm Standby
+DR strategy where a scaled-down version of production runs continuously in the DR region. On failover, the environment is scaled up to full production capacity. RTO: 10–30 min. Cost: ~20–30% overhead above single-region.
+
+| | |
+|---|---|
+| **Docs** | [Warm standby DR](https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html) |
+| **Azure** | Azure Site Recovery (warm standby mode) |
+| **GCP** | GKE cluster with scaled-down node pools in a secondary region |

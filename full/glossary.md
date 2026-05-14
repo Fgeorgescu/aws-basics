@@ -4,6 +4,45 @@ Full definitions with context, common misconceptions, and when each concept matt
 
 ---
 
+## Active-Active
+A multi-region deployment model where all regions simultaneously serve live production traffic. There is no failover step — if a region fails, traffic is redistributed among the surviving regions automatically (by Route 53 latency routing or Global Accelerator). The data tier must handle writes from multiple regions concurrently, which requires conflict resolution: DynamoDB Global Tables uses last-writer-wins per item; Aurora Global Database routes writes to a single primary region by default (write forwarding directs cross-region writes to the primary transparently).
+
+The cost multiplier is significant. An active-active deployment across three regions roughly triples networking costs (replication traffic), multiplies write costs for DynamoDB (one rWRU per replica per write), and doubles or triples compute costs. It's justified when the business cannot tolerate even 1–5 minutes of reduced availability.
+
+| | |
+|---|---|
+| **Docs** | [Active-active multi-site](https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html) |
+| **Azure** | Active-active with Azure Traffic Manager or Front Door |
+| **GCP** | Multi-region with Cloud Spanner or multi-region Cloud Load Balancing |
+
+---
+
+## Active-Passive
+A multi-region deployment where one region (primary) handles all traffic and a second region (DR) stays ready to accept traffic if the primary fails. The DR region can be fully provisioned (hot standby, ~2× cost), scaled down (warm standby, ~1.3× cost), or minimal (pilot light, ~1.1× cost).
+
+Failover is triggered either automatically (Route 53 health check detects primary failure, flips DNS record to DR) or manually (operator updates routing, re-sizes DB, promotes replicas). The critical design question is whether your automated failover can complete within your RTO — which depends on DNS TTL, health check settings, DB promotion time, and whether the DR environment is pre-warmed.
+
+| | |
+|---|---|
+| **Docs** | [DR options — active-passive](https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html) |
+| **Azure** | Azure Site Recovery / Traffic Manager with priority routing |
+| **GCP** | Cloud Load Balancing with failover backend configuration |
+
+---
+
+## Aurora Global Database
+An Aurora capability that replicates a primary Aurora cluster (in one region) to up to five secondary regions. Replication is asynchronous but typically achieves under 1 second of lag under normal conditions. Secondary clusters can serve read traffic, reducing read latency for globally distributed users even before any failover.
+
+On managed failover (primary region failure), Aurora promotes one secondary to primary. The process takes under 1 minute in most configurations. The metric `aurora_global_db_replication_lag` tells you the current lag — if it's elevated (minutes, not sub-second), a sudden primary failure means you'll lose that lag window of writes. Always monitor this metric continuously and alarm before it approaches your RPO threshold.
+
+| | |
+|---|---|
+| **Docs** | [Aurora Global Database](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-global-database.html) |
+| **Azure** | Azure SQL Database Active Geo-Replication / Hyperscale |
+| **GCP** | Cloud Spanner (multi-region) / AlloyDB cross-region replication |
+
+---
+
 ## ABAC — Attribute-Based Access Control
 Access control model where permissions are derived from tags/attributes attached to the IAM principal and/or the target resource, rather than explicit per-resource assignments.
 
@@ -539,3 +578,176 @@ The security properties: (1) no credentials stored in GitHub; (2) credentials ex
 | **Docs** | [Workload identity federation](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_oidc.html) |
 | **Azure** | Federated Identity Credentials (Azure AD workload identity) |
 | **GCP** | Workload Identity Federation |
+
+---
+
+## AWS Fault Injection Service (FIS)
+Chaos engineering service that lets you run controlled, documented fault experiments against real AWS infrastructure. The key insight FIS encodes is that theoretical RTO and actual RTO are almost always different — an untested failover plan is wishful thinking, not engineering.
+
+FIS experiments are defined as JSON/YAML templates specifying targets (a specific EC2 Auto Scaling group, a specific AZ, all Spot instances with a certain tag) and actions (terminate, add latency, throttle API calls, block AZ network traffic). Experiments are stopped automatically if a defined safety condition is breached (e.g., if an alarm triggers, abort the experiment). This makes running experiments in production environments much safer than manual chaos.
+
+| | |
+|---|---|
+| **Docs** | [AWS FIS](https://docs.aws.amazon.com/fis/latest/userguide/what-is.html) |
+| **Azure** | Azure Chaos Studio |
+| **GCP** | No managed equivalent — open-source tools like Chaos Toolkit or LitmusChaos |
+
+---
+
+## AWS Resilience Hub
+Resilience Hub performs static architectural analysis of your application against declared RTO/RPO targets and produces a Resiliency Score (0–100) with specific remediation recommendations. It understands AWS resource dependencies: if your API Gateway has a Lambda backend that has an RDS dependency, and the RDS instance has no Multi-AZ, Resilience Hub surfaces that single point of failure.
+
+The operational value is continuous monitoring: Resilience Hub can re-run assessments on a schedule or when infrastructure changes are detected, alerting you when a deployment introduces a new single point of failure. This makes HA regression visible before it causes an incident.
+
+| | |
+|---|---|
+| **Docs** | [Resilience Hub](https://docs.aws.amazon.com/resilience-hub/latest/userguide/what-is.html) |
+| **Azure** | Azure Business Continuity Center |
+| **GCP** | No direct equivalent |
+
+---
+
+## Circuit Breaker
+A software pattern that monitors calls to a downstream dependency and "opens" (stops sending requests) when failure rate exceeds a threshold. An open circuit lets the downstream service recover instead of being flooded with retried requests, which often makes partial failures cascade into total failures.
+
+AWS App Mesh implements circuit breaking at the service mesh level. API Gateway has circuit breaker-like behavior via its throttling configuration. For application-level circuit breakers in Lambda or EC2 code, teams typically use libraries like Resilience4j or implement the pattern manually with state stored in ElastiCache.
+
+| | |
+|---|---|
+| **Docs** | [App Mesh outlier detection](https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual-node-spec.html) |
+| **Azure** | Azure API Management (circuit breaker policy) |
+| **GCP** | Cloud Service Mesh / Traffic Director |
+
+---
+
+## Cross-Zone Load Balancing
+When enabled, a load balancer distributes requests evenly across all healthy targets in all AZs, regardless of which AZ the load balancer node received the request in. Without it, each LB node only sends traffic to targets in its own AZ — meaning uneven distribution if you have different numbers of targets per AZ.
+
+The cost nuance: ALB has cross-zone enabled by default, and inter-AZ traffic from cross-zone routing is billed at $0.01/GB. For NLBs created after October 2023, cross-zone load balancing can be enabled without inter-AZ charges — a significant billing improvement. For older NLBs, enabling cross-zone load balancing generates inter-AZ charges that can be substantial for high-throughput applications.
+
+| | |
+|---|---|
+| **Docs** | [Cross-zone load balancing](https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html#cross-zone-load-balancing) |
+| **Azure** | Zone-redundant load balancing (Standard Load Balancer) |
+| **GCP** | Cloud Load Balancing is globally distributed by default |
+
+---
+
+## DynamoDB Global Tables
+Active-active multi-region DynamoDB. Tables are replicated across selected regions; any region can accept writes. This is DynamoDB's answer to global active-active: no single-region bottleneck for writes, low latency for users in any replica region.
+
+The cost model changes significantly with Global Tables. Normally, a write consumes 1 WRU. With Global Tables, it also consumes 1 rWRU per additional replica region. A 3-region Global Table triples the write cost. For a high-throughput table (say, 10,000 WCUs provisioned), this is the dominant cost driver — often exceeding storage and read costs combined. Factor this in before adopting Global Tables; for many workloads, active-passive cross-region replication with async promotion is a fraction of the cost with an acceptable RPO.
+
+| | |
+|---|---|
+| **Docs** | [Global Tables](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GlobalTables.html) |
+| **Azure** | Azure Cosmos DB multi-region writes |
+| **GCP** | Cloud Spanner (multi-region) / Firestore multi-region |
+
+---
+
+## ElastiCache
+AWS managed in-memory data store for Redis and Memcached. For HA, ElastiCache Redis supports Multi-AZ with auto-failover: a primary node in one AZ with one or more replicas in other AZs. When the primary fails, a replica is automatically promoted (~20–30 seconds). Replication is asynchronous — there is a small window of potential data loss.
+
+ElastiCache Global Datastore extends this cross-region: a primary cluster in one region replicates to secondary clusters in up to two additional regions (async). Secondary clusters are read-only during normal operation; on primary region failure, a secondary can be promoted to primary. This is the ElastiCache equivalent of Aurora Global Database, and like Aurora, the replication lag determines your effective RPO.
+
+| | |
+|---|---|
+| **Docs** | [ElastiCache](https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/WhatIs.html) |
+| **Azure** | Azure Cache for Redis |
+| **GCP** | Memorystore for Redis |
+
+---
+
+## Pilot Light
+The minimum viable DR strategy. You keep data warm in the DR region (DB snapshots replicated, S3 buckets mirrored, AMIs copied) but run no compute. Infrastructure-as-code definitions exist and are tested, so you know how long provisioning takes. Route 53 records point to the primary region; the DR region has no live endpoints.
+
+On failover, someone executes the runbook: launch EC2 instances from the copied AMIs, promote the RDS cross-region read replica to standalone (takes 10–30 minutes for the promotion plus any catch-up replication), update DNS. The total RTO is typically 30–60 minutes. The ongoing cost is near zero — just storage for snapshots and cross-region transfer for replication.
+
+Pilot light is frequently used for regulatory compliance: organizations in regulated industries need a documented DR capability, but the actual workload doesn't justify the cost of a warm standby.
+
+| | |
+|---|---|
+| **Docs** | [Pilot light DR](https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html) |
+| **Azure** | Azure Site Recovery (cold standby configuration) |
+| **GCP** | GCP snapshot + Deployment Manager / Terraform for DR automation |
+
+---
+
+## RPO — Recovery Point Objective
+The maximum acceptable amount of data loss, measured as the time window between the last recovered state and the point of failure. An RPO of zero means no data loss is acceptable — achievable only with synchronous replication (viable intra-region; impractical cross-region due to latency). An RPO of 1 minute means you're willing to lose up to 60 seconds of transactions.
+
+RPO drives your replication mode. Synchronous replication (RDS Multi-AZ) approaches zero RPO but adds write latency equal to the replication round-trip. Asynchronous replication (RDS read replicas, Aurora Global Database, DynamoDB Global Tables) reduces write latency but creates a non-zero RPO equal to the current replication lag.
+
+| | |
+|---|---|
+| **Docs** | [DR concepts](https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-workloads-on-aws.html) |
+| **Azure** | Same concept — used in Azure Site Recovery SLA definitions |
+| **GCP** | Same concept |
+
+---
+
+## RTO — Recovery Time Objective
+The maximum acceptable duration of a service outage, from the moment of failure to the moment of full restoration. RTO drives your failover strategy and, therefore, your DR infrastructure cost. An RTO of hours allows a pilot light (launch compute from snapshots on failure). An RTO of minutes requires pre-provisioned infrastructure and automated failover. An RTO of seconds requires active-active, which eliminates failover entirely.
+
+RTO is a business SLA, not a technical preference. Derive it from revenue impact calculations: "we lose $X per minute of downtime for this service." Then choose the cheapest failover tier that satisfies the requirement. Most organizations discover that their actual RTO requirements are less stringent than their intuition suggests, and that warm standby (30-minute RTO) covers most workloads at a fraction of active-active cost.
+
+| | |
+|---|---|
+| **Docs** | [DR concepts](https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-workloads-on-aws.html) |
+| **Azure** | Same concept |
+| **GCP** | Same concept |
+
+---
+
+## Route 53 ARC — Application Recovery Controller
+An extension of Route 53 that adds two capabilities missing from standard failover routing. Readiness checks continuously verify that your DR environment matches production specifications: same Auto Scaling group limits, same database instance class, same number of targets behind the load balancer. If something drifts (someone scaled down the DR environment and forgot to restore it), the readiness check fails and alerts you before a real disaster.
+
+Routing controls let you manually shift traffic between regions in seconds via an API call or console click, bypassing DNS TTL entirely. This is critical for ambiguous failures where the health check isn't triggering (the endpoint responds but returns degraded results) — you can force traffic to the DR region without waiting for Route 53's failover logic to engage.
+
+| | |
+|---|---|
+| **Docs** | [Route 53 ARC](https://docs.aws.amazon.com/r53recovery/latest/dg/what-is-route53-recovery.html) |
+| **Azure** | Azure Traffic Manager + Azure Site Recovery (combined) |
+| **GCP** | No direct equivalent |
+
+---
+
+## S3 Cross-Region Replication (CRR)
+S3 feature that asynchronously replicates objects from a source bucket to destination buckets in other regions. Replication is triggered by new uploads and updates; existing objects can be replicated via a one-time Batch Replication job. The source and destination buckets can be in different accounts.
+
+CRR is the data foundation for multi-region and DR architectures: replicate application artifacts to the DR region so they're available without internet dependency during a failure. The cost surprises: CRR charges per-object PUT request on the destination side (you pay to write each object again), plus the standard inter-region data transfer rate. For buckets with millions of small objects, the per-request cost can exceed the data transfer cost.
+
+| | |
+|---|---|
+| **Docs** | [S3 CRR](https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html) |
+| **Azure** | Azure Blob geo-redundant storage (GRS / GZRS) |
+| **GCP** | Cloud Storage dual-region or multi-region buckets |
+
+---
+
+## S3 Multi-Region Access Points (MRAP)
+A single global S3 endpoint that routes each request to the nearest available bucket in an S3 replication group. Requests are routed based on network proximity; if a bucket in the nearest region is unavailable, requests fail over to the next closest bucket.
+
+MRAP supports both Active-Active (requests go to the nearest bucket) and Active-Passive (one bucket handles all traffic; a failover control shifts to the secondary). The failover control API lets you shift traffic between buckets in seconds. The additional MRAP transfer fee ($0.0033/GB) is worth accounting for in data-heavy architectures, but it's a small fraction of the primary S3 transfer costs.
+
+| | |
+|---|---|
+| **Docs** | [S3 MRAP](https://docs.aws.amazon.com/AmazonS3/latest/userguide/MultiRegionAccessPoints.html) |
+| **Azure** | Azure Blob Storage with geo-redundancy (GRS / RA-GRS) |
+| **GCP** | Cloud Storage multi-region bucket |
+
+---
+
+## Warm Standby
+A DR strategy where a scaled-down version of the production environment runs continuously in the DR region. The architecture is identical to production — same services, same configuration — but sized smaller: fewer EC2 instances, smaller database instance class, lower Auto Scaling group capacity.
+
+On failover, you scale up the Auto Scaling group to production capacity (new instances launch in 3–5 minutes) and resize the database (which involves a brief restart). The RTO is typically 10–30 minutes. The ongoing cost is proportional to the standby size — running at 20% of production adds roughly 20% to your infrastructure bill, significantly cheaper than a hot standby but with a longer RTO.
+
+The sizing decision is non-obvious: the standby must be large enough to absorb 100% of peak production traffic after failover, not just 100% of average traffic. If you size for average load and fail over during a traffic spike, the DR environment is immediately overwhelmed.
+
+| | |
+|---|---|
+| **Docs** | [Warm standby DR](https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html) |
+| **Azure** | Azure Site Recovery (warm standby mode) |
+| **GCP** | GKE with scaled-down node pools + Cloud SQL replica in secondary region |

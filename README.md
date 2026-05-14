@@ -10,6 +10,7 @@ A structured study guide covering core AWS concepts across networking, security,
 | `security.md` | IAM, SCPs, Permission Boundaries, Identity Center, cross-account access patterns, GuardDuty, CloudTrail, Security Hub |
 | `multi-account.md` | AWS Organizations, OU structure, foundational accounts, Control Tower, Landing Zone, cost optimization |
 | `cloud-to-cloud.md` | AWS ↔ Azure and AWS ↔ GCP connectivity, shared identity federation, Workload Identity |
+| `high-availability.md` | RTO/RPO, failover strategies (Pilot Light → Active-Active), niche HA costs (inter-AZ replication, CRR, Global Tables write multiplier), AWS HA services and best practices |
 | `glossary.md` | 60+ terms with abbreviations, descriptions, official docs links, and Azure/GCP equivalents |
 | `exercises.md` | Six architecture design scenarios with context, requirements, and solution guidance |
 
