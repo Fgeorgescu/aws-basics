@@ -167,6 +167,31 @@
     .sidebar::-webkit-scrollbar, .main::-webkit-scrollbar { width: 5px; }
     .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
     .main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* Tooltip terms — dashed underline signals "I have a definition" */
+    .tooltip-term {
+      border-bottom: 1.5px dashed #93a3d8;
+      cursor: help;
+    }
+
+    /* Floating tooltip box */
+    #glossary-tooltip {
+      position: fixed;
+      z-index: 9999;
+      background: #1e2230;
+      color: #c8cedf;
+      padding: 9px 13px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      line-height: 1.65;
+      max-width: 300px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.12s;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+      white-space: normal;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
   </style>
 </head>
 <body>
@@ -207,7 +232,140 @@
     </div>
   </div>
 
+  <!-- Single floating tooltip element -->
+  <div id="glossary-tooltip"></div>
+
   <script>
+    // ── Glossary tooltip ──────────────────────────────────────────────────────
+
+    let glossaryTerms = {};  // { "SCP": "Service Control Policy — …", … }
+    let glossaryReady  = false;
+
+    async function loadGlossary() {
+      try {
+        const res = await fetch('/file/summary/glossary.md');
+        if (!res.ok) return;
+        glossaryTerms = parseGlossary(await res.text());
+        glossaryReady  = true;
+      } catch (e) {
+        console.warn('Tooltip glossary unavailable', e);
+      }
+    }
+
+    function parseGlossary(md) {
+      const map = {};
+      for (const section of md.split(/\n(?=## )/)) {
+        const lines = section.trim().split('\n');
+        if (!lines[0].startsWith('## ')) continue;
+        const header = lines[0].slice(3).trim();
+
+        // First real description line (skip blank, ---, tables, code fences)
+        let desc = '';
+        for (let i = 1; i < lines.length; i++) {
+          const l = lines[i].trim();
+          if (!l || l === '---' || l.startsWith('|') || l.startsWith('```')) continue;
+          desc = l
+            .replace(/\*\*/g, '')
+            .replace(/`([^`]+)`/g, '$1')
+            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+          break;
+        }
+        if (!desc) continue;
+
+        // "ABBR — Full Name"  or  "Full Name (ABBR)"
+        const dashM  = header.match(/^([A-Z][A-Z0-9./]+(?:\s+[A-Z][A-Z0-9./]+)*)\s+[—–]\s+(.+)/);
+        const parenM = header.match(/^(.+?)\s+\(([A-Z][A-Z0-9]+)\)\s*$/);
+
+        let abbr = null, fullName = null;
+        if (dashM)       { abbr = dashM[1].trim();  fullName = dashM[2].trim(); }
+        else if (parenM) { abbr = parenM[2].trim(); fullName = parenM[1].trim(); }
+
+        // Only register clearly abbreviated tokens (2+ uppercase chars, optional digits)
+        if (abbr && /^[A-Z][A-Z0-9]{1,}$/.test(abbr.replace(/[\s.]/g, ''))) {
+          map[abbr] = `${fullName} — ${desc}`;
+        }
+      }
+      return map;
+    }
+
+    function applyTooltips(container) {
+      if (!glossaryReady) return;
+
+      const keys    = Object.keys(glossaryTerms).sort((a, b) => b.length - a.length);
+      if (!keys.length) return;
+      const escaped = keys.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+      const pattern = new RegExp(`\\b(${escaped.join('|')})\\b`, 'g');
+
+      // Collect text nodes; skip code/pre/a and already-wrapped spans
+      const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          if (node.parentElement?.closest('code, pre, a, .tooltip-term'))
+            return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+
+      const nodes = [];
+      let n;
+      while ((n = walker.nextNode())) nodes.push(n);
+
+      for (const textNode of nodes) {
+        const text = textNode.textContent;
+        pattern.lastIndex = 0;
+        if (!pattern.test(text)) continue;
+        pattern.lastIndex = 0;
+
+        const frag = document.createDocumentFragment();
+        let last = 0, m;
+        while ((m = pattern.exec(text)) !== null) {
+          if (m.index > last)
+            frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+          const span = document.createElement('span');
+          span.className  = 'tooltip-term';
+          span.dataset.tip = glossaryTerms[m[1]];
+          span.textContent = m[1];
+          frag.appendChild(span);
+          last = m.index + m[0].length;
+        }
+        if (last < text.length)
+          frag.appendChild(document.createTextNode(text.slice(last)));
+        textNode.parentNode.replaceChild(frag, textNode);
+      }
+    }
+
+    // ── Tooltip positioning ───────────────────────────────────────────────────
+
+    const tipEl = document.getElementById('glossary-tooltip');
+
+    document.addEventListener('mouseover', e => {
+      const term = e.target.closest('.tooltip-term');
+      if (!term) return;
+      tipEl.textContent = term.dataset.tip;
+      tipEl.style.opacity = '1';
+      moveTip(e.clientX, e.clientY);
+    });
+
+    document.addEventListener('mousemove', e => {
+      if (e.target.closest('.tooltip-term')) moveTip(e.clientX, e.clientY);
+    });
+
+    document.addEventListener('mouseout', e => {
+      if (!e.relatedTarget?.closest?.('.tooltip-term')) tipEl.style.opacity = '0';
+    });
+
+    function moveTip(cx, cy) {
+      const W  = window.innerWidth, H = window.innerHeight;
+      const tw = tipEl.offsetWidth  || 300;
+      const th = tipEl.offsetHeight || 60;
+      let left = cx + 14, top = cy - th - 10;
+      if (left + tw > W - 12) left = cx - tw - 14;
+      if (top < 10)           top  = cy + 22;
+      tipEl.style.left = left + 'px';
+      tipEl.style.top  = top  + 'px';
+    }
+
+    // ── App ───────────────────────────────────────────────────────────────────
+
     const ICONS = {
       "networking.md": "🌐",
       "security.md": "🔒",
@@ -296,6 +454,9 @@
         a.rel = "noopener noreferrer";
       });
 
+      // Wrap abbreviations with tooltip spans
+      applyTooltips(document.getElementById("doc-content"));
+
       // Update toggle button states
       const hasFull = meta?.hasFull;
       document.getElementById("btn-summary").classList.toggle("active", activeMode === "summary");
@@ -309,6 +470,7 @@
     }
 
     loadFileList();
+    loadGlossary();
   </script>
 </body>
 </html>
