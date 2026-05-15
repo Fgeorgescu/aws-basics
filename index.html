@@ -284,7 +284,7 @@
 
     async function loadGlossary() {
       try {
-        const res = await fetch('/file/summary/glossary.md');
+        const res = await fetch('resources/glossary/summary.md');
         if (!res.ok) return;
         glossaryTerms = parseGlossary(await res.text());
         glossaryReady  = true;
@@ -463,7 +463,7 @@
     let filesMeta = []; // [{ name, hasFull }]
 
     async function loadFileList() {
-      const res = await fetch("/api/files");
+      const res = await fetch("files.json");
       filesMeta = await res.json();
       const list = document.getElementById("file-list");
       list.innerHTML = "";
@@ -490,7 +490,8 @@
       const meta = filesMeta.find((f) => f.name === activeFile);
       const mode = (activeMode === "full" && meta?.hasFull) ? "full" : "summary";
 
-      const res = await fetch(`/file/${mode}/${encodeURIComponent(activeFile)}`);
+      const filePath = mode === "full" ? meta.fullPath : meta.summaryPath;
+      const res = await fetch(filePath);
       const raw = await res.text();
       const html = marked.parse(raw);
 
