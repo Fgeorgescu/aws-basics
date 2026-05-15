@@ -751,3 +751,63 @@ The sizing decision is non-obvious: the standby must be large enough to absorb 1
 | **Docs** | [Warm standby DR](https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html) |
 | **Azure** | Azure Site Recovery (warm standby mode) |
 | **GCP** | GKE with scaled-down node pools + Cloud SQL replica in secondary region |
+
+---
+
+## AWS Backup
+AWS Backup is a fully managed, policy-driven service that centralizes and automates data protection across AWS services including RDS, Aurora, EBS, EFS, DynamoDB, S3, FSx, and Storage Gateway. A Backup Plan defines: when to run backups (cron schedule), how long to retain them, and whether to copy them to another region or account.
+
+The critical capability for DR is **cross-account vault copy**: backups are written to a vault in a separate AWS account under a separate SCP that denies deletion. Even if an attacker compromises the production account and has admin access, they cannot delete backups in the isolated backup account. This is the recommended architecture for ransomware protection.
+
+**Vault Lock** (WORM mode) goes further: once applied in compliance mode, no identity — including the account root user — can delete recovery points before the retention period expires, and the lock itself cannot be removed after a 72-hour grace window.
+
+| | |
+|---|---|
+| **Docs** | [AWS Backup](https://docs.aws.amazon.com/aws-backup/latest/devguide/whatisbackup.html) |
+| **Azure** | Azure Backup (similar policy model; Recovery Services Vault + immutability) |
+| **GCP** | Google Cloud Backup and DR (agent-based; different model from AWS Backup) |
+
+---
+
+## DRS — AWS Elastic Disaster Recovery
+DRS provides continuous block-level replication for physical servers, VMware VMs, and EC2 instances. Unlike snapshot-based backup (which captures a point in time), DRS streams ongoing disk changes to a lightweight staging area in the target AWS region. At any moment, the staging area holds a current replica of the source disk.
+
+When failover is triggered (drill or real), DRS provisions full-size EC2 instances using the staged data. The provisioning time — not data transfer — is the primary RTO driver, typically 5–20 minutes.
+
+**Why block-level replication matters for complex applications:** Application-consistent backups (RDS snapshots, EBS snapshots) capture a consistent state of a single service. Multi-tier applications have state spread across multiple components (application server + database + message queue). Block-level replication captures everything simultaneously, so the recovery instances boot in a consistent cross-tier state. This is particularly valuable for legacy applications where you can't easily control each component's backup schedule.
+
+| | |
+|---|---|
+| **Docs** | [AWS Elastic Disaster Recovery](https://docs.aws.amazon.com/drs/latest/userguide/what-is-drs.html) |
+| **Azure** | Azure Site Recovery (similar continuous replication model) |
+| **GCP** | Zerto on GCP / Google Cloud Disaster Recovery |
+
+---
+
+## PITR — Point-in-Time Recovery
+PITR allows restoring a database to any specific second within a configurable retention window rather than only to scheduled snapshot points. RDS and Aurora PITR work by replaying transaction logs on top of the most recent automated backup. DynamoDB PITR captures per-second snapshots of table state with no performance impact on the table.
+
+**When snapshots are insufficient:** If a developer runs `DELETE FROM orders WHERE 1=1` at 14:32:17 and your most recent snapshot is from 02:00, a snapshot restore loses 12 hours of transactions. PITR lets you restore to 14:32:16 — one second before the error — recovering everything.
+
+**The RPO implication:** DynamoDB PITR gives a theoretical RPO of seconds (any second within 35 days). RDS PITR RPO is bounded by transaction log backup frequency, typically 5 minutes. For the absolute minimum RPO on RDS, combine PITR with synchronous Multi-AZ replication.
+
+| | |
+|---|---|
+| **Docs** | [RDS PITR](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PitrRestore.html) · [DynamoDB PITR](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/PointInTimeRecovery.html) |
+| **Azure** | Automated backups with PITR for Azure SQL Database and Cosmos DB |
+| **GCP** | Cloud SQL PITR · Spanner PITR |
+
+---
+
+## Vault Lock (AWS Backup)
+Vault Lock applies a WORM (Write Once, Read Many) retention policy to an AWS Backup vault. Recovery points written to a locked vault cannot be deleted by any AWS identity — including the root user and AWS Support — before their retention expiry. In compliance mode, the lock policy itself is irremovable after a 72-hour cooling-off window.
+
+The architectural use case is ransomware defense. A sophisticated ransomware attack targets not just production data but backup infrastructure. If backups are stored in the same account with deletable policies, the attacker can destroy them. Cross-account vaults with Vault Lock ensure that even a fully compromised production account cannot destroy the recovery point.
+
+**Governance mode vs compliance mode:** Governance mode allows principals with specific IAM permissions to override the lock (useful for testing or administrative corrections). Compliance mode removes all override capability after the cool-off window — use it when regulatory requirements mandate immutable records.
+
+| | |
+|---|---|
+| **Docs** | [AWS Backup Vault Lock](https://docs.aws.amazon.com/aws-backup/latest/devguide/vault-lock.html) |
+| **Azure** | Azure Backup immutability policies (similar; applies to Recovery Services Vault) |
+| **GCP** | Cloud Storage object retention locks / bucket lock |

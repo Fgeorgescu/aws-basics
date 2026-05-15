@@ -1040,3 +1040,47 @@ DR strategy where a scaled-down version of production runs continuously in the D
 | **Docs** | [Warm standby DR](https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html) |
 | **Azure** | Azure Site Recovery (warm standby mode) |
 | **GCP** | GKE cluster with scaled-down node pools in a secondary region |
+
+---
+
+## AWS Backup
+Centralized, policy-based backup service covering RDS, EBS, EFS, DynamoDB, S3, FSx, and more. Backup plans define schedules, retention, and cross-region/cross-account copy rules. Vault Lock enforces WORM retention — even the root user cannot delete backups within the lock window.
+
+| | |
+|---|---|
+| **Docs** | [AWS Backup](https://docs.aws.amazon.com/aws-backup/latest/devguide/whatisbackup.html) |
+| **Azure** | Azure Backup |
+| **GCP** | Google Cloud Backup and DR |
+
+---
+
+## DRS — AWS Elastic Disaster Recovery
+Continuous block-level replication service for migrating or protecting physical, virtual, and cloud servers. The replication agent streams changes to lightweight staging instances; on failover, full-size recovery EC2 instances are launched from the staged data within minutes. RPO: seconds to minutes. RTO: 5–20 min.
+
+| | |
+|---|---|
+| **Docs** | [AWS Elastic Disaster Recovery](https://docs.aws.amazon.com/drs/latest/userguide/what-is-drs.html) |
+| **Azure** | Azure Site Recovery |
+| **GCP** | Google Cloud Disaster Recovery / Zerto on GCP |
+
+---
+
+## PITR — Point-in-Time Recovery
+Ability to restore a database or object store to any second within a retention window (typically 1–35 days). RDS and Aurora PITR use continuous transaction log backups; DynamoDB PITR captures per-second snapshots with no performance impact. Useful for recovering from accidental deletes or data corruption that snapshot-based backups would also contain.
+
+| | |
+|---|---|
+| **Docs** | [RDS PITR](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PitrRestore.html) · [DynamoDB PITR](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/PointInTimeRecovery.html) |
+| **Azure** | Automated backups with point-in-time restore (Azure SQL, Cosmos DB) |
+| **GCP** | Cloud SQL PITR · Firestore PITR |
+
+---
+
+## Vault Lock (AWS Backup)
+Immutable retention policy applied to an AWS Backup vault that prevents any principal — including root — from deleting recovery points before the retention period expires. Compliance mode makes the lock itself irremovable after a 72-hour cool-off window. Primary defense against ransomware destroying backup data.
+
+| | |
+|---|---|
+| **Docs** | [AWS Backup Vault Lock](https://docs.aws.amazon.com/aws-backup/latest/devguide/vault-lock.html) |
+| **Azure** | Azure Backup soft delete + immutability policies |
+| **GCP** | Cloud Storage object retention locks |
