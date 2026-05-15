@@ -26,6 +26,8 @@ Official AWS video series where Solutions Architects explain core cloud architec
 
 ## Networking & Security
 
+- [Protecting Your Network in the Cloud](https://www.youtube.com/watch?v=lWFfN31PjL8)
+- [Design Patterns to Secure Public URLs](https://www.youtube.com/watch?v=w6S_w8oXZO0)
 - [Secrets Management](https://www.youtube.com/watch?v=NwEg5yKv_QE)
 - [Mitigating Bad Bot Traffic at the AWS Edge](https://www.youtube.com/watch?v=wvFTZPTXrp8)
 - [Secure Database Replication Between AWS Accounts](https://www.youtube.com/watch?v=caiNIgDxuNc)
