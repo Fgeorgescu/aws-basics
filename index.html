@@ -416,6 +416,7 @@
       "high-availability.md": "⚡",
       "cloud-to-cloud.md":    "☁️",
       "diagrams.md":          "📊",
+      "videos.md":            "🎬",
       "exercises.md":         "✏️",
       "glossary.md":          "📖",
     };
@@ -429,13 +430,14 @@
       "high-availability.md": "High Availability",
       "cloud-to-cloud.md":    "Cloud to Cloud",
       "diagrams.md":          "Diagrams",
+      "videos.md":            "Videos",
       "exercises.md":         "Exercises",
       "glossary.md":          "Glossary",
     };
 
     // Sidebar order: pinned-first → alpha middle → pinned-last
     const SIDEBAR_PIN_FIRST = ["CLAUDE.md", "README.md"];
-    const SIDEBAR_PIN_LAST  = ["exercises.md", "glossary.md"];
+    const SIDEBAR_PIN_LAST  = ["videos.md", "exercises.md", "glossary.md"];
 
     function sidebarSort(files) {
       return [...files].sort((a, b) => {
