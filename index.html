@@ -219,8 +219,8 @@
           <span class="topbar-badge" id="doc-badge"></span>
 
           <div class="mode-toggle">
-            <button class="mode-btn active" id="btn-summary" onclick="setMode('summary')">Summary</button>
-            <button class="mode-btn" id="btn-full" onclick="setMode('full')">Full</button>
+            <button class="mode-btn" id="btn-summary" onclick="setMode('summary')">Summary</button>
+            <button class="mode-btn active" id="btn-full" onclick="setMode('full')">Full</button>
           </div>
         </div>
 
@@ -367,31 +367,52 @@
     // ── App ───────────────────────────────────────────────────────────────────
 
     const ICONS = {
-      "networking.md": "🌐",
-      "security.md": "🔒",
-      "multi-account.md": "🏢",
-      "exercises.md": "✏️",
-      "cloud-to-cloud.md": "☁️",
+      "CLAUDE.md":            "📋",
+      "README.md":            "📄",
+      "networking.md":        "🌐",
+      "security.md":          "🔒",
+      "multi-account.md":     "🏢",
       "high-availability.md": "⚡",
-      "glossary.md": "📖",
-      "CLAUDE.md": "📋",
+      "cloud-to-cloud.md":    "☁️",
+      "exercises.md":         "✏️",
+      "glossary.md":          "📖",
     };
 
     const LABELS = {
-      "networking.md": "Networking",
-      "security.md": "Security",
-      "multi-account.md": "Multi-Account",
-      "exercises.md": "Exercises",
-      "cloud-to-cloud.md": "Cloud to Cloud",
+      "CLAUDE.md":            "About",
+      "README.md":            "Readme",
+      "networking.md":        "Networking",
+      "security.md":          "Security",
+      "multi-account.md":     "Multi-Account",
       "high-availability.md": "High Availability",
-      "glossary.md": "Glossary",
-      "CLAUDE.md": "About",
+      "cloud-to-cloud.md":    "Cloud to Cloud",
+      "exercises.md":         "Exercises",
+      "glossary.md":          "Glossary",
     };
+
+    // Sidebar order: pinned-first → alpha middle → pinned-last
+    const SIDEBAR_PIN_FIRST = ["CLAUDE.md", "README.md"];
+    const SIDEBAR_PIN_LAST  = ["exercises.md", "glossary.md"];
+
+    function sidebarSort(files) {
+      return [...files].sort((a, b) => {
+        const rank = f => {
+          const fi = SIDEBAR_PIN_FIRST.indexOf(f);
+          if (fi !== -1) return fi;                          // 0, 1
+          const li = SIDEBAR_PIN_LAST.indexOf(f);
+          if (li !== -1) return 100 + li;                   // 100, 101
+          return 50;                                         // middle bucket
+        };
+        const ra = rank(a.name), rb = rank(b.name);
+        if (ra !== rb) return ra - rb;
+        return a.name.localeCompare(b.name);                 // alpha within middle
+      });
+    }
 
     marked.setOptions({ breaks: false, gfm: true });
 
     let activeFile = null;
-    let activeMode = "summary"; // "summary" | "full"
+    let activeMode = "full"; // "summary" | "full"
     let filesMeta = []; // [{ name, hasFull }]
 
     async function loadFileList() {
@@ -399,7 +420,7 @@
       filesMeta = await res.json();
       const list = document.getElementById("file-list");
       list.innerHTML = "";
-      filesMeta.forEach(({ name }) => {
+      sidebarSort(filesMeta).forEach(({ name }) => {
         const item = document.createElement("div");
         item.className = "sidebar-item";
         item.dataset.file = name;
