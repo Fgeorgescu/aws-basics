@@ -2,6 +2,8 @@
 
 A structured study guide covering core AWS concepts. Each topic has a concise summary and a full educational version with deeper explanations, design rationale, and real-world context.
 
+**[View online → https://fgeorgescu.github.io/aws-basics/](https://fgeorgescu.github.io/aws-basics/)**
+
 ## Topics
 
 | Topic | Contents |
