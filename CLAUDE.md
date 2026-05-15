@@ -6,15 +6,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This repository is an AWS system design study guide for an interview preparation focused on a client engagement involving critical multi-account infrastructure. There is no runnable code — all content is markdown documentation and design exercises.
 
-## File Index
+## Structure
 
-| File | Contents |
+```
+.
+├── CLAUDE.md / README.md     # Root-level (GitHub + tooling conventions)
+├── resources/
+│   ├── <topic>/
+│   │   ├── summary.md        # Concise bullet-point reference
+│   │   └── full.md           # Educational prose with context and examples
+│   └── videos.md             # Single-version file (no full/ counterpart)
+├── index.html                # Browser viewer UI
+└── server.js                 # Local HTTP server (no dependencies)
+```
+
+## Topics
+
+| Topic | Contents |
 |---|---|
-| `networking.md` | VPC endpoints, PrivateLink, NAT/Internet Gateways, Transit Gateway vs peering, multi-region connectivity |
-| `security.md` | IAM, SCPs, Permission Boundaries, Identity Center, cross-account access, detective controls |
-| `multi-account.md` | AWS Organizations structure, Landing Zone, foundational accounts, cross-account patterns, cost optimization |
-| `exercises.md` | Six design scenarios requiring architecture rationale and resource selection (no implementation) |
-| `cloud-to-cloud.md` | AWS ↔ Azure and AWS ↔ GCP connectivity patterns, shared identity, DNS federation |
+| `networking` | VPC endpoints, PrivateLink, NAT/Internet Gateways, Transit Gateway vs peering, multi-region connectivity |
+| `security` | IAM, SCPs, Permission Boundaries, Identity Center, cross-account access, detective controls |
+| `multi-account` | AWS Organizations structure, Landing Zone, foundational accounts, cross-account patterns, cost optimization |
+| `high-availability` | RTO/RPO, failover tiers, niche HA costs, AWS HA services, health check tuning |
+| `disaster-recovery` | DR strategy tiers, AWS DRS, AWS Backup, Route 53 ARC, runbook automation, DR testing |
+| `cloud-to-cloud` | AWS ↔ Azure and AWS ↔ GCP connectivity patterns, shared identity, DNS federation |
+| `diagrams` | Mermaid architecture diagrams for all core patterns |
+| `exercises` | Six design scenarios requiring architecture rationale and resource selection (no implementation) |
+| `glossary` | 80+ terms with abbreviations, descriptions, docs links, and Azure/GCP equivalents |
+| `videos` | AWS Back to Basics playlist organised by topic |
 
 ## How to Use
 

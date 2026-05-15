@@ -34,11 +34,14 @@ New `.md` files added to the root or `full/` directory are automatically picked 
 
 ```
 .
-├── *.md              # Summary versions (concise, bullet-point reference)
-├── full/
-│   └── *.md          # Full versions (educational prose with context and examples)
-├── index.html        # Browser viewer UI
-└── server.js         # Local HTTP server (no dependencies)
+├── CLAUDE.md / README.md
+├── resources/
+│   ├── <topic>/
+│   │   ├── summary.md   # Concise bullet-point reference
+│   │   └── full.md      # Educational prose with context and examples
+│   └── videos.md        # Single-version file
+├── index.html           # Browser viewer UI
+└── server.js            # Local HTTP server (no dependencies)
 ```
 
 ## Coverage
