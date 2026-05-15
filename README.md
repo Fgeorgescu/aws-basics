@@ -1,24 +1,25 @@
 # AWS Basics
 
-A structured study guide covering core AWS concepts across networking, security, multi-account architecture, and cloud-to-cloud connectivity. Each topic includes a concise summary version and a full educational version with deeper explanations and context.
+A structured study guide covering core AWS concepts. Each topic has a concise summary and a full educational version with deeper explanations, design rationale, and real-world context.
 
 ## Topics
 
-| File | Contents |
+| Topic | Contents |
 |---|---|
-| `networking.md` | VPC, subnets, IGW, NAT Gateway, VPC Endpoints, PrivateLink, Transit Gateway, VPC Peering, multi-region connectivity |
-| `security.md` | IAM, SCPs, Permission Boundaries, Identity Center, cross-account access patterns, GuardDuty, CloudTrail, Security Hub |
-| `multi-account.md` | AWS Organizations, OU structure, foundational accounts, Control Tower, Landing Zone, cost optimization |
-| `cloud-to-cloud.md` | AWS ↔ Azure and AWS ↔ GCP connectivity, shared identity federation, Workload Identity |
-| `high-availability.md` | RTO/RPO, failover strategies (Pilot Light → Active-Active), niche HA costs (inter-AZ replication, CRR, Global Tables write multiplier), AWS HA services and best practices |
-| `glossary.md` | 60+ terms with abbreviations, descriptions, official docs links, and Azure/GCP equivalents |
-| `exercises.md` | Six architecture design scenarios with context, requirements, and solution guidance |
-
-Each topic file in `full/` contains the extended educational version of the corresponding root-level summary.
+| **Networking** | VPC, IGW, NAT Gateway, VPC Endpoints, PrivateLink, Transit Gateway, VPC Peering, multi-region connectivity |
+| **Security** | IAM, SCPs, Permission Boundaries, Identity Center, cross-account access, GuardDuty, CloudTrail, Security Hub |
+| **Multi-Account** | AWS Organizations, OU structure, foundational accounts, Control Tower, Landing Zone, cost optimization |
+| **High Availability** | RTO/RPO, failover tiers, niche HA costs (inter-AZ replication, Global Tables write multiplier, Aurora Global DB I/O), AWS HA services |
+| **Disaster Recovery** | DR strategy tiers (Backup & Restore → Active-Active), AWS DRS, AWS Backup, Route 53 ARC, runbook automation, DR testing |
+| **Cloud to Cloud** | AWS ↔ Azure and AWS ↔ GCP connectivity, shared identity federation, Workload Identity |
+| **Diagrams** | Mermaid architecture diagrams: multi-account org, TGW hub-and-spoke, cross-account CI/CD, VPC endpoints, Identity Center, multi-region HA |
+| **Exercises** | Six architecture design scenarios with context, requirements, and solution guidance |
+| **Glossary** | 80+ terms with abbreviations, descriptions, official docs links, and Azure/GCP equivalents |
+| **Videos** | AWS Back to Basics playlist organised by topic with direct YouTube links |
 
 ## Running the Viewer
 
-A small Node.js viewer lets you browse and read all documents in the browser with a Summary / Full toggle.
+A small Node.js viewer lets you browse all documents in the browser with a Summary / Full toggle and inline Mermaid diagram rendering.
 
 **Requirements**: Node.js (no npm install needed — uses only built-in modules).
 
@@ -28,7 +29,7 @@ node server.js
 
 Then open [http://localhost:3000](http://localhost:3000).
 
-New `.md` files added to the root or `full/` directory are automatically picked up on page refresh.
+New topics added to `resources/` are automatically picked up on page refresh.
 
 ## Structure
 
