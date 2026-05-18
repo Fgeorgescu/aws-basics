@@ -275,25 +275,25 @@
     </nav>
 
     <div class="main" id="main">
+      <div class="topbar">
+        <button class="hamburger" id="hamburger" onclick="openSidebar()" aria-label="Open menu">
+          <span></span><span></span><span></span>
+        </button>
+        <span class="topbar-title" id="doc-title">AWS Study Guide</span>
+        <span class="topbar-badge" id="doc-badge"></span>
+
+        <div class="mode-toggle" id="mode-toggle" style="display:none">
+          <button class="mode-btn" id="btn-summary" onclick="setMode('summary')">Summary</button>
+          <button class="mode-btn active" id="btn-full" onclick="setMode('full')">Full</button>
+        </div>
+      </div>
+
       <div class="empty" id="empty-state">
         <div class="big-icon">📄</div>
         <p>Select a document from the sidebar</p>
       </div>
 
       <div id="doc-view" style="display:none; flex-direction:column; flex:1;">
-        <div class="topbar">
-          <button class="hamburger" id="hamburger" onclick="openSidebar()" aria-label="Open menu">
-            <span></span><span></span><span></span>
-          </button>
-          <span class="topbar-title" id="doc-title"></span>
-          <span class="topbar-badge" id="doc-badge"></span>
-
-          <div class="mode-toggle">
-            <button class="mode-btn" id="btn-summary" onclick="setMode('summary')">Summary</button>
-            <button class="mode-btn active" id="btn-full" onclick="setMode('full')">Full</button>
-          </div>
-        </div>
-
         <div class="content">
           <div id="mode-indicator" class="mode-indicator summary">📋 Summary</div>
           <div class="md" id="doc-content"></div>
@@ -575,6 +575,7 @@
       }
 
       document.getElementById("empty-state").style.display = "none";
+      document.getElementById("mode-toggle").style.display = "";
       const docView = document.getElementById("doc-view");
       docView.style.display = "flex";
       document.getElementById("main").scrollTo(0, 0);
