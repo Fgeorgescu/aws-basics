@@ -169,6 +169,67 @@
     .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
     .main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
+    /* Hamburger */
+    .hamburger {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 6px;
+      flex-direction: column;
+      gap: 5px;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .hamburger span {
+      display: block;
+      width: 20px;
+      height: 2px;
+      background: var(--text);
+      border-radius: 2px;
+      transition: opacity 0.15s;
+    }
+    .hamburger:hover { background: rgba(0,0,0,0.06); }
+
+    /* Sidebar overlay backdrop */
+    .sidebar-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 19;
+    }
+    .sidebar-backdrop.open { display: block; }
+
+    /* Mobile layout */
+    @media (max-width: 700px) {
+      .hamburger { display: flex; }
+
+      .sidebar {
+        position: fixed;
+        left: 0; top: 0; bottom: 0;
+        z-index: 20;
+        transform: translateX(-100%);
+        transition: transform 0.22s ease;
+        box-shadow: 4px 0 24px rgba(0,0,0,0.25);
+      }
+      .sidebar.open { transform: translateX(0); }
+
+      .topbar { padding: 10px 14px; gap: 8px; }
+      .topbar-badge { display: none; }
+      .topbar-title { font-size: 14px; }
+
+      .mode-btn { padding: 5px 10px; font-size: 11.5px; }
+
+      .content { padding: 24px 16px 60px; }
+
+      .md h1 { font-size: 22px; }
+      .md h2 { font-size: 18px; }
+      .md table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    }
+
     /* Mermaid diagram containers */
     .mermaid { margin: 0 0 20px; text-align: center; }
     .mermaid svg { max-width: 100%; height: auto; border-radius: 8px; }
@@ -200,8 +261,9 @@
   </style>
 </head>
 <body>
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
   <div class="layout">
-    <nav class="sidebar">
+    <nav class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <h1>AWS Study Guide</h1>
         <p>Interview Prep</p>
@@ -220,6 +282,9 @@
 
       <div id="doc-view" style="display:none; flex-direction:column; flex:1;">
         <div class="topbar">
+          <button class="hamburger" id="hamburger" onclick="openSidebar()" aria-label="Open menu">
+            <span></span><span></span><span></span>
+          </button>
           <span class="topbar-title" id="doc-title"></span>
           <span class="topbar-badge" id="doc-badge"></span>
 
@@ -472,7 +537,7 @@
         item.className = "sidebar-item";
         item.dataset.file = name;
         item.innerHTML = `<span class="icon">${ICONS[name] || "📄"}</span><span>${LABELS[name] || name.replace(".md", "")}</span>`;
-        item.addEventListener("click", () => openFile(name));
+        item.addEventListener("click", () => { openFile(name); closeSidebar(); });
         list.appendChild(item);
       });
     }
@@ -539,6 +604,15 @@
     function setMode(mode) {
       activeMode = mode;
       renderCurrentFile();
+    }
+
+    function openSidebar() {
+      document.getElementById('sidebar').classList.add('open');
+      document.getElementById('sidebar-backdrop').classList.add('open');
+    }
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebar-backdrop').classList.remove('open');
     }
 
     loadFileList();
