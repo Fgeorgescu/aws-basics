@@ -1,0 +1,144 @@
+{
+  "rootFiles": [
+    {
+      "name": "CLAUDE.md",
+      "hasFull": false,
+      "summaryPath": "CLAUDE.md"
+    },
+    {
+      "name": "README.md",
+      "hasFull": false,
+      "summaryPath": "README.md"
+    }
+  ],
+  "categories": [
+    {
+      "id": "aws",
+      "files": [
+        {
+          "name": "cloud-to-cloud.md",
+          "hasFull": true,
+          "summaryPath": "resources/aws/cloud-to-cloud/summary.md",
+          "fullPath": "resources/aws/cloud-to-cloud/full.md"
+        },
+        {
+          "name": "diagrams.md",
+          "hasFull": true,
+          "summaryPath": "resources/aws/diagrams/summary.md",
+          "fullPath": "resources/aws/diagrams/full.md"
+        },
+        {
+          "name": "disaster-recovery.md",
+          "hasFull": true,
+          "summaryPath": "resources/aws/disaster-recovery/summary.md",
+          "fullPath": "resources/aws/disaster-recovery/full.md"
+        },
+        {
+          "name": "exercises.md",
+          "hasFull": true,
+          "summaryPath": "resources/aws/exercises/summary.md",
+          "fullPath": "resources/aws/exercises/full.md"
+        },
+        {
+          "name": "glossary.md",
+          "hasFull": true,
+          "summaryPath": "resources/aws/glossary/summary.md",
+          "fullPath": "resources/aws/glossary/full.md"
+        },
+        {
+          "name": "high-availability.md",
+          "hasFull": true,
+          "summaryPath": "resources/aws/high-availability/summary.md",
+          "fullPath": "resources/aws/high-availability/full.md"
+        },
+        {
+          "name": "multi-account.md",
+          "hasFull": true,
+          "summaryPath": "resources/aws/multi-account/summary.md",
+          "fullPath": "resources/aws/multi-account/full.md"
+        },
+        {
+          "name": "networking.md",
+          "hasFull": true,
+          "summaryPath": "resources/aws/networking/summary.md",
+          "fullPath": "resources/aws/networking/full.md"
+        },
+        {
+          "name": "security.md",
+          "hasFull": true,
+          "summaryPath": "resources/aws/security/summary.md",
+          "fullPath": "resources/aws/security/full.md"
+        },
+        {
+          "name": "videos.md",
+          "hasFull": false,
+          "summaryPath": "resources/aws/videos.md"
+        }
+      ]
+    },
+    {
+      "id": "system-design",
+      "files": [
+        {
+          "name": "api-design.md",
+          "hasFull": true,
+          "summaryPath": "resources/system-design/api-design/summary.md",
+          "fullPath": "resources/system-design/api-design/full.md"
+        },
+        {
+          "name": "data-stores.md",
+          "hasFull": true,
+          "summaryPath": "resources/system-design/data-stores/summary.md",
+          "fullPath": "resources/system-design/data-stores/full.md"
+        },
+        {
+          "name": "diagrams.md",
+          "hasFull": true,
+          "summaryPath": "resources/system-design/diagrams/summary.md",
+          "fullPath": "resources/system-design/diagrams/full.md"
+        },
+        {
+          "name": "distributed-systems.md",
+          "hasFull": true,
+          "summaryPath": "resources/system-design/distributed-systems/summary.md",
+          "fullPath": "resources/system-design/distributed-systems/full.md"
+        },
+        {
+          "name": "exercises.md",
+          "hasFull": true,
+          "summaryPath": "resources/system-design/exercises/summary.md",
+          "fullPath": "resources/system-design/exercises/full.md"
+        },
+        {
+          "name": "fundamentals.md",
+          "hasFull": true,
+          "summaryPath": "resources/system-design/fundamentals/summary.md",
+          "fullPath": "resources/system-design/fundamentals/full.md"
+        },
+        {
+          "name": "glossary.md",
+          "hasFull": false,
+          "summaryPath": "resources/system-design/glossary/summary.md"
+        },
+        {
+          "name": "messaging.md",
+          "hasFull": true,
+          "summaryPath": "resources/system-design/messaging/summary.md",
+          "fullPath": "resources/system-design/messaging/full.md"
+        },
+        {
+          "name": "reliability.md",
+          "hasFull": true,
+          "summaryPath": "resources/system-design/reliability/summary.md",
+          "fullPath": "resources/system-design/reliability/full.md"
+        },
+        {
+          "name": "scalability.md",
+          "hasFull": true,
+          "summaryPath": "resources/system-design/scalability/summary.md",
+          "fullPath": "resources/system-design/scalability/full.md"
+        }
+      ]
+    }
+  ]
+}
