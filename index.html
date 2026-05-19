@@ -580,16 +580,17 @@
     let allFilesMeta = {}; // { filename: { name, hasFull, summaryPath, fullPath } }
 
     function registerFiles(files) {
-      files.forEach(f => { allFilesMeta[f.name] = f; });
+      files.forEach(f => { allFilesMeta[f.uid || f.name] = f; });
     }
 
     function makeSidebarItem(file) {
+      const key = file.uid || file.name;
       const { name } = file;
       const item = document.createElement("div");
       item.className = "sidebar-item";
-      item.dataset.file = name;
+      item.dataset.file = key;
       item.innerHTML = `<span class="icon">${ICONS[name] || "📄"}</span><span>${LABELS[name] || name.replace(".md", "")}</span>`;
-      item.addEventListener("click", () => { openFile(name); closeSidebar(); });
+      item.addEventListener("click", () => { openFile(key); closeSidebar(); });
       return item;
     }
 
@@ -605,6 +606,7 @@
       const catList = document.getElementById("category-list");
       catList.innerHTML = "";
       (manifest.categories || []).forEach(cat => {
+        cat.files.forEach(f => { f.uid = cat.id + "/" + f.name; });
         registerFiles(cat.files);
 
         const group = document.createElement("div");
