@@ -8,34 +8,54 @@ const RES  = path.join(DIR, "resources");
 
 const ROOT_FILES = ["CLAUDE.md", "README.md"];
 
-function getFiles() {
+function getCategoryFiles(catDir) {
+  const catPath = path.join(RES, catDir);
   const files = [];
 
-  for (const f of ROOT_FILES) {
-    if (fs.existsSync(path.join(DIR, f)))
-      files.push({ name: f, hasFull: false, summaryPath: f });
-  }
-
-  if (!fs.existsSync(RES)) return files;
-
-  for (const entry of fs.readdirSync(RES, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
-    if (entry.isDirectory()) {
-      const dir     = entry.name;
-      const hasSumm = fs.existsSync(path.join(RES, dir, "summary.md"));
-      const hasFull = fs.existsSync(path.join(RES, dir, "full.md"));
+  for (const sub of fs.readdirSync(catPath, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    if (sub.isDirectory()) {
+      const topicDir = sub.name;
+      const hasSumm = fs.existsSync(path.join(catPath, topicDir, "summary.md"));
+      const hasFull = fs.existsSync(path.join(catPath, topicDir, "full.md"));
       if (!hasSumm && !hasFull) continue;
       files.push({
-        name: dir + ".md",
+        name: topicDir + ".md",
         hasFull,
-        summaryPath: `resources/${dir}/summary.md`,
-        ...(hasFull && { fullPath: `resources/${dir}/full.md` }),
+        summaryPath: `resources/${catDir}/${topicDir}/summary.md`,
+        ...(hasFull && { fullPath: `resources/${catDir}/${topicDir}/full.md` }),
       });
-    } else if (entry.name.endsWith(".md")) {
-      files.push({ name: entry.name, hasFull: false, summaryPath: `resources/${entry.name}` });
+    } else if (sub.name.endsWith(".md")) {
+      files.push({
+        name: sub.name,
+        hasFull: false,
+        summaryPath: `resources/${catDir}/${sub.name}`,
+      });
     }
   }
 
   return files;
+}
+
+function getManifest() {
+  const rootFiles = [];
+  for (const f of ROOT_FILES) {
+    if (fs.existsSync(path.join(DIR, f)))
+      rootFiles.push({ name: f, hasFull: false, summaryPath: f });
+  }
+
+  const categories = [];
+  if (!fs.existsSync(RES)) return { rootFiles, categories };
+
+  for (const entry of fs.readdirSync(RES, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    if (!entry.isDirectory()) continue;
+    const catDir = entry.name;
+    const catFiles = getCategoryFiles(catDir);
+    if (catFiles.length > 0) {
+      categories.push({ id: catDir, files: catFiles });
+    }
+  }
+
+  return { rootFiles, categories };
 }
 
 http
@@ -46,13 +66,11 @@ http
       return serveFile(res, path.join(DIR, "index.html"), "text/html");
     }
 
-    // Static manifest — generate dynamically so local dev never needs a pre-built files.json
     if (url.pathname === "/files.json") {
       res.writeHead(200, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify(getFiles(), null, 2));
+      return res.end(JSON.stringify(getManifest(), null, 2));
     }
 
-    // Static files: resources/** and root markdown files
     if (url.pathname.startsWith("/resources/") || url.pathname === "/CLAUDE.md" || url.pathname === "/README.md") {
       const filePath = path.join(DIR, url.pathname);
       if (!filePath.startsWith(DIR + path.sep) && filePath !== DIR) return send(res, 400, "Bad request");

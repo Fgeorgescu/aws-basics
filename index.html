@@ -48,8 +48,35 @@
     .sidebar-header h1 { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #ffffff; }
     .sidebar-header p { font-size: 11px; color: var(--sidebar-heading); margin-top: 2px; }
 
-    .sidebar-section { padding: 14px 0 8px; }
+    .sidebar-section { padding: 10px 0 4px; }
     .sidebar-section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sidebar-heading); padding: 0 16px 6px; }
+
+    /* Category group */
+    .sidebar-category { padding: 0; }
+    .sidebar-category-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .sidebar-category-header:hover { background: rgba(255,255,255,0.04); }
+    .sidebar-category-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--sidebar-heading);
+    }
+    .sidebar-category-chevron {
+      font-size: 10px;
+      color: var(--sidebar-heading);
+      transition: transform 0.2s;
+    }
+    .sidebar-category.collapsed .sidebar-category-chevron { transform: rotate(-90deg); }
+    .sidebar-category-items { overflow: hidden; }
+    .sidebar-category.collapsed .sidebar-category-items { display: none; }
 
     .sidebar-item {
       display: flex;
@@ -265,13 +292,14 @@
   <div class="layout">
     <nav class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <h1>AWS Study Guide</h1>
+        <h1>Study Guide</h1>
         <p>Interview Prep</p>
       </div>
       <div class="sidebar-section">
-        <div class="sidebar-section-label">Documents</div>
-        <div id="file-list"></div>
+        <div class="sidebar-section-label">Overview</div>
+        <div id="root-file-list"></div>
       </div>
+      <div id="category-list"></div>
     </nav>
 
     <div class="main" id="main">
@@ -349,7 +377,7 @@
 
     async function loadGlossary() {
       try {
-        const res = await fetch('resources/glossary/summary.md');
+        const res = await fetch('resources/aws/glossary/summary.md');
         if (!res.ok) return;
         glossaryTerms = parseGlossary(await res.text());
         glossaryReady  = true;
@@ -473,51 +501,75 @@
     // ── App ───────────────────────────────────────────────────────────────────
 
     const ICONS = {
-      "CLAUDE.md":            "📋",
-      "README.md":            "📄",
-      "networking.md":        "🌐",
-      "security.md":          "🔒",
-      "multi-account.md":     "🏢",
+      // Root
+      "CLAUDE.md":              "📋",
+      "README.md":              "📄",
+      // AWS
+      "networking.md":          "🌐",
+      "security.md":            "🔒",
+      "multi-account.md":       "🏢",
       "high-availability.md":   "⚡",
-      "disaster-recovery.md":  "🚨",
-      "cloud-to-cloud.md":     "☁️",
-      "diagrams.md":          "📊",
-      "videos.md":            "🎬",
-      "exercises.md":         "✏️",
-      "glossary.md":          "📖",
+      "disaster-recovery.md":   "🚨",
+      "cloud-to-cloud.md":      "☁️",
+      "diagrams.md":            "📊",
+      "videos.md":              "🎬",
+      "exercises.md":           "✏️",
+      "glossary.md":            "📖",
+      // System Design
+      "fundamentals.md":        "🧱",
+      "data-stores.md":         "🗄️",
+      "api-design.md":          "🔌",
+      "messaging.md":           "📨",
+      "scalability.md":         "📈",
+      "reliability.md":         "🛡️",
+      "distributed-systems.md": "🕸️",
+      "glossary.md":            "📖",
     };
 
     const LABELS = {
-      "CLAUDE.md":            "About",
-      "README.md":            "Readme",
-      "networking.md":        "Networking",
-      "security.md":          "Security",
-      "multi-account.md":     "Multi-Account",
-      "high-availability.md":  "High Availability",
-      "disaster-recovery.md": "Disaster Recovery",
-      "cloud-to-cloud.md":    "Cloud to Cloud",
-      "diagrams.md":          "Diagrams",
-      "videos.md":            "Videos",
-      "exercises.md":         "Exercises",
-      "glossary.md":          "Glossary",
+      // Root
+      "CLAUDE.md":              "About",
+      "README.md":              "Readme",
+      // AWS
+      "networking.md":          "Networking",
+      "security.md":            "Security",
+      "multi-account.md":       "Multi-Account",
+      "high-availability.md":   "High Availability",
+      "disaster-recovery.md":   "Disaster Recovery",
+      "cloud-to-cloud.md":      "Cloud to Cloud",
+      "diagrams.md":            "Diagrams",
+      "videos.md":              "Videos",
+      "exercises.md":           "Exercises",
+      "glossary.md":            "Glossary",
+      // System Design
+      "fundamentals.md":        "Fundamentals",
+      "data-stores.md":         "Data Stores",
+      "api-design.md":          "API Design",
+      "messaging.md":           "Messaging",
+      "scalability.md":         "Scalability",
+      "reliability.md":         "Reliability",
+      "distributed-systems.md": "Distributed Systems",
+      "glossary.md":            "Glossary",
     };
 
-    // Sidebar order: pinned-first → alpha middle → pinned-last
-    const SIDEBAR_PIN_FIRST = ["CLAUDE.md", "README.md"];
-    const SIDEBAR_PIN_LAST  = ["videos.md", "exercises.md", "glossary.md"];
+    const CATEGORY_LABELS = {
+      "aws":           "Amazon Web Services",
+      "system-design": "System Design",
+    };
 
-    function sidebarSort(files) {
+    const AWS_PIN_LAST = ["videos.md", "exercises.md", "glossary.md"];
+    const SD_PIN_LAST  = ["diagrams.md", "exercises.md", "glossary.md"];
+
+    function sortCategoryFiles(catId, files) {
+      const pinLast = catId === "aws" ? AWS_PIN_LAST : (catId === "system-design" ? SD_PIN_LAST : []);
       return [...files].sort((a, b) => {
         const rank = f => {
-          const fi = SIDEBAR_PIN_FIRST.indexOf(f);
-          if (fi !== -1) return fi;                          // 0, 1
-          const li = SIDEBAR_PIN_LAST.indexOf(f);
-          if (li !== -1) return 100 + li;                   // 100, 101
-          return 50;                                         // middle bucket
+          const li = pinLast.indexOf(f);
+          return li !== -1 ? 100 + li : 50;
         };
         const ra = rank(a.name), rb = rank(b.name);
         if (ra !== rb) return ra - rb;
-        return a.name.localeCompare(b.name);                 // alpha within middle
+        return a.name.localeCompare(b.name);
       });
     }
 
@@ -525,20 +577,54 @@
 
     let activeFile = null;
     let activeMode = "full"; // "summary" | "full"
-    let filesMeta = []; // [{ name, hasFull }]
+    let allFilesMeta = {}; // { filename: { name, hasFull, summaryPath, fullPath } }
+
+    function registerFiles(files) {
+      files.forEach(f => { allFilesMeta[f.name] = f; });
+    }
+
+    function makeSidebarItem(file) {
+      const { name } = file;
+      const item = document.createElement("div");
+      item.className = "sidebar-item";
+      item.dataset.file = name;
+      item.innerHTML = `<span class="icon">${ICONS[name] || "📄"}</span><span>${LABELS[name] || name.replace(".md", "")}</span>`;
+      item.addEventListener("click", () => { openFile(name); closeSidebar(); });
+      return item;
+    }
 
     async function loadFileList() {
       const res = await fetch("files.json");
-      filesMeta = await res.json();
-      const list = document.getElementById("file-list");
-      list.innerHTML = "";
-      sidebarSort(filesMeta).forEach(({ name }) => {
-        const item = document.createElement("div");
-        item.className = "sidebar-item";
-        item.dataset.file = name;
-        item.innerHTML = `<span class="icon">${ICONS[name] || "📄"}</span><span>${LABELS[name] || name.replace(".md", "")}</span>`;
-        item.addEventListener("click", () => { openFile(name); closeSidebar(); });
-        list.appendChild(item);
+      const manifest = await res.json();
+
+      registerFiles(manifest.rootFiles || []);
+      const rootList = document.getElementById("root-file-list");
+      rootList.innerHTML = "";
+      (manifest.rootFiles || []).forEach(f => rootList.appendChild(makeSidebarItem(f)));
+
+      const catList = document.getElementById("category-list");
+      catList.innerHTML = "";
+      (manifest.categories || []).forEach(cat => {
+        registerFiles(cat.files);
+
+        const group = document.createElement("div");
+        group.className = "sidebar-category";
+        group.dataset.cat = cat.id;
+
+        const header = document.createElement("div");
+        header.className = "sidebar-category-header";
+        header.innerHTML = `
+          <span class="sidebar-category-label">${CATEGORY_LABELS[cat.id] || cat.id}</span>
+          <span class="sidebar-category-chevron">▾</span>`;
+        header.addEventListener("click", () => group.classList.toggle("collapsed"));
+
+        const itemsEl = document.createElement("div");
+        itemsEl.className = "sidebar-category-items";
+        sortCategoryFiles(cat.id, cat.files).forEach(f => itemsEl.appendChild(makeSidebarItem(f)));
+
+        group.appendChild(header);
+        group.appendChild(itemsEl);
+        catList.appendChild(group);
       });
     }
 
@@ -552,7 +638,7 @@
 
     async function renderCurrentFile() {
       if (!activeFile) return;
-      const meta = filesMeta.find((f) => f.name === activeFile);
+      const meta = allFilesMeta[activeFile];
       const mode = (activeMode === "full" && meta?.hasFull) ? "full" : "summary";
 
       const filePath = mode === "full" ? meta.fullPath : meta.summaryPath;
