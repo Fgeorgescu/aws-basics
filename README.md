@@ -14,6 +14,7 @@ A structured study guide covering AWS and general system design concepts for int
 | **High Availability** | RTO/RPO, failover tiers, niche HA costs, AWS HA services, health check tuning |
 | **Disaster Recovery** | DR strategy tiers (Backup & Restore → Active-Active), AWS DRS, AWS Backup, Route 53 ARC, runbook automation |
 | **Cloud to Cloud** | AWS ↔ Azure and AWS ↔ GCP connectivity, shared identity federation, Workload Identity |
+| **API Gateway** | Auth methods: Cognito authorizer, JWT authorizer, Lambda authorizer, IAM/SigV4, mTLS, resource policies, WAF |
 | **Diagrams** | Mermaid architecture diagrams: multi-account org, TGW hub-and-spoke, cross-account CI/CD, VPC endpoints |
 | **Exercises** | Six architecture design scenarios with context, requirements, and solution guidance |
 | **Glossary** | 80+ terms with abbreviations, descriptions, official docs links, and Azure/GCP equivalents |

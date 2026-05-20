@@ -37,6 +37,7 @@ The viewer groups topics into two collapsible sidebar categories: **Amazon Web S
 | `high-availability` | RTO/RPO, failover tiers, niche HA costs, AWS HA services, health check tuning |
 | `disaster-recovery` | DR strategy tiers, AWS DRS, AWS Backup, Route 53 ARC, runbook automation, DR testing |
 | `cloud-to-cloud` | AWS ↔ Azure and AWS ↔ GCP connectivity patterns, shared identity, DNS federation |
+| `api-gateway` | API Gateway auth methods: Cognito, Lambda authorizers, IAM, JWT, mTLS, resource policies, WAF |
 | `diagrams` | Mermaid architecture diagrams for AWS core patterns |
 | `exercises` | Six design scenarios requiring architecture rationale and resource selection |
 | `glossary` | 80+ AWS terms with abbreviations, descriptions, docs links, and Azure/GCP equivalents |

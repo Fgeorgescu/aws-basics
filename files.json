@@ -16,6 +16,12 @@
       "id": "aws",
       "files": [
         {
+          "name": "api-gateway.md",
+          "hasFull": true,
+          "summaryPath": "resources/aws/api-gateway/summary.md",
+          "fullPath": "resources/aws/api-gateway/full.md"
+        },
+        {
           "name": "cloud-to-cloud.md",
           "hasFull": true,
           "summaryPath": "resources/aws/cloud-to-cloud/summary.md",
